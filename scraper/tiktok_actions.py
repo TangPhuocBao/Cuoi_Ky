@@ -420,7 +420,7 @@ class TikTokSeleniumScraper:
         
         # Lấy comment cho từng video
         for i, video in enumerate(videos):
-            logger.info(f"📥 Đang lấy comment cho video {i+1}/{len(videos)}: {video.get('video_id', '')}")
+            logger.info(f" Đang lấy comment cho video {i+1}/{len(videos)}: {video.get('video_id', '')}")
             
             video_url = video.get("video_url")
             if video_url:
