@@ -43,13 +43,13 @@ class TikTokSeleniumScraper:
                 continue
 
     def scroll_and_collect(self, url, target=1000):
-        print(f"🌐 Open {url}")
+        print(f" Open {url}")
         self.driver.get(url)
         time.sleep(6)
 
         for i in range(MAX_SCROLL):
             self.collect_video_links()
-            print(f"🔽 Scroll {i+1} | collected={len(self.videos)}")
+            print(f"Scroll {i+1} | collected={len(self.videos)}")
 
             if len(self.videos) >= target:
                 break
@@ -146,9 +146,7 @@ class TikTokSeleniumScraper:
         print(f"💾 Saved → {path}")
 
 
-# =========================
 # MAIN
-# =========================
 def main():
     scraper = TikTokSeleniumScraper()
 
