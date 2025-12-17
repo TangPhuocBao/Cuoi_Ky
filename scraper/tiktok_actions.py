@@ -430,25 +430,25 @@ class TikTokSeleniumScraper:
                 
                 # In thông tin tóm tắt
                 if comments:
-                    logger.info(f"   ✓ Đã lấy {len(comments)} comment")
+                    logger.info(f" Đã lấy {len(comments)} comment")
                     for j, comment in enumerate(comments[:3]):  # Hiển thị 3 comment đầu
                         logger.info(f"      {j+1}. @{comment.get('username', '')}: {comment.get('text', '')[:50]}...")
                     if len(comments) > 3:
                         logger.info(f"      ... và {len(comments) - 3} comment khác")
             else:
-                logger.warning(f"   ✗ Video không có URL")
+                logger.warning(f"  Video không có URL")
             
             # Dừng giữa các video để tránh bị block
             if i < len(videos) - 1:
                 sleep_time = random.uniform(5, 10)
-                logger.info(f"⏳ Chờ {sleep_time:.1f}s trước khi lấy video tiếp theo...")
+                logger.info(f"Chờ {sleep_time:.1f}s trước khi lấy video tiếp theo...")
                 time.sleep(sleep_time)
         
         return videos
 
     async def get_trending(self, target_count: int = 3000, autosave_path: Optional[str] = None, autosave_every: int = 100):
         """Lấy video trending."""
-        logger.info(f"🔥 Đang lấy tối đa {target_count} video trending...")
+        logger.info(f"Đang lấy tối đa {target_count} video trending...")
         
         try:
             self.driver.get("https://www.tiktok.com/explore")
@@ -467,7 +467,7 @@ class TikTokSeleniumScraper:
 
     async def search_videos(self, keyword: str, target_count: int = 3000, autosave_path: Optional[str] = None, autosave_every: int = 100):
         """Tìm kiếm video."""
-        logger.info(f"🔍 Đang tìm kiếm '{keyword}' (tối đa {target_count} video)...")
+        logger.info(f"Đang tìm kiếm '{keyword}' (tối đa {target_count} video)...")
         
         try:
             search_url = f"https://www.tiktok.com/search/video?q={quote(keyword)}"
@@ -487,7 +487,7 @@ class TikTokSeleniumScraper:
 
     async def hashtag_videos(self, hashtag: str, target_count: int = 3000, autosave_path: Optional[str] = None, autosave_every: int = 100):
         """Lấy video từ hashtag."""
-        logger.info(f"🏷  Đang lấy video từ hashtag #{hashtag} (tối đa {target_count})...")
+        logger.info(f"Đang lấy video từ hashtag #{hashtag} (tối đa {target_count})...")
         
         try:
             hashtag_url = f"https://www.tiktok.com/tag/{quote(hashtag)}"
@@ -507,7 +507,7 @@ class TikTokSeleniumScraper:
 
     async def user_videos(self, username: str, target_count: int = 3000, autosave_path: Optional[str] = None, autosave_every: int = 100):
         """Lấy video từ user."""
-        logger.info(f"👤 Đang lấy video từ @{username} (tối đa {target_count})...")
+        logger.info(f"Đang lấy video từ @{username} (tối đa {target_count})...")
         
         try:
             user_url = f"https://www.tiktok.com/@{username}"
@@ -532,13 +532,13 @@ def save_json(data: List[Dict[str, Any]], filename: str, quiet: bool = False):
     with open(filename, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     if not quiet:
-        logger.info(f"💾 Đã lưu {len(data)} video vào file: {filename}")
+        logger.info(f" Đã lưu {len(data)} video vào file: {filename}")
 
 
 def print_stats(videos: List[Dict[str, Any]]):
     """In thống kê."""
     if not videos:
-        logger.warning("⚠️  Không có video để thống kê")
+        logger.warning("Không có video để thống kê")
         return
 
     total_views = sum(int(v.get("views", 0) or 0) for v in videos)
@@ -550,7 +550,7 @@ def print_stats(videos: List[Dict[str, Any]]):
     total_comments_collected = sum(len(v.get("comments_data", [])) for v in videos)
 
     n = len(videos)
-    logger.info("\n📊 THỐNG KÊ:")
+    logger.info("\n THỐNG KÊ:")
     logger.info(f"   • Số video: {n}")
     logger.info(f"   • Tổng views: {total_views:,}")
     logger.info(f"   • Tổng likes: {total_likes:,}")
@@ -591,7 +591,7 @@ async def main():
         
         if choice == "5":
             # Chế độ lấy video với comment
-            logger.info("\n🎯 CHẾ ĐỘ LẤY VIDEO VỚI COMMENT")
+            logger.info("\nCHẾ ĐỘ LẤY VIDEO VỚI COMMENT")
             logger.info("1. Trending")
             logger.info("2. Search theo từ khóa")
             logger.info("3. Hashtag")
@@ -669,7 +669,7 @@ async def main():
                     )
 
         if not videos:
-            logger.warning("\n⚠️  Không lấy được video nào.")
+            logger.warning("\n Không lấy được video nào.")
             return
 
         print_stats(videos)
@@ -686,7 +686,7 @@ async def main():
             logger.info(f"   • Video nhiều comment nhất: {max_comments} comment")
             
             # Hiển thị một số comment mẫu
-            logger.info("\n📝 COMMENT MẪU:")
+            logger.info("\n COMMENT MẪU:")
             for i, video in enumerate(videos[:3]):  # Lấy 3 video đầu
                 comments = video.get("comments_data", [])
                 if comments:
@@ -701,9 +701,9 @@ async def main():
             save_json(videos, filename)
 
     finally:
-        logger.info("\n🔄 Đóng WebDriver...")
+        logger.info("\n Đóng WebDriver...")
         scraper.close()
-        logger.info("✓ Xong!")
+        logger.info(" Xong!")
 
 
 if __name__ == "__main__":
