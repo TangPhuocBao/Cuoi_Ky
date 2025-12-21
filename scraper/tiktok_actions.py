@@ -12,7 +12,7 @@ from selenium.webdriver.support import expected_conditions as EC
 
 
 # ================= CONFIG =================
-TARGET_PROFILE = "https://www.tiktok.com/"
+TARGET_PROFILE = "https://www.tiktok.com"
 LIMIT_VIDEOS = 5
 MAX_COMMENTS_PER_VIDEO = 50
 
@@ -80,7 +80,9 @@ def scroll_get_video_links(driver, limit):
 
         if len(links) >= limit:
             break
-
+        if "/explore" in driver.current_url:
+            driver.get(TARGET_PROFILE)
+            time.sleep(3)
     return list(links)[:limit]
 
 
