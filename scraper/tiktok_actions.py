@@ -12,8 +12,8 @@ from selenium.webdriver.support import expected_conditions as EC
 
 
 # ================= CONFIG =================
-TARGET_PROFILE = "https://www.tiktok.com"
-LIMIT_VIDEOS = 5
+TARGET_PROFILE = "https://www.tiktok.com/"
+LIMIT_VIDEOS = 200
 MAX_COMMENTS_PER_VIDEO = 50
 
 VIDEO_FILE = "tiktok_videos.csv"
@@ -80,9 +80,7 @@ def scroll_get_video_links(driver, limit):
 
         if len(links) >= limit:
             break
-        if "/explore" in driver.current_url:
-            driver.get(TARGET_PROFILE)
-            time.sleep(3)
+
     return list(links)[:limit]
 
 
@@ -133,23 +131,50 @@ def fetch_comments_api(video_id, cookies, user_agent, max_comments=50):
     headers = {
         "User-Agent": user_agent,
         "Referer": f"https://www.tiktok.com/video/{video_id}",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Connection": "keep-alive",
+        "Sec-Fetch-Site": "same-origin",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Dest": "empty"
     }
 
     params = {
         "aid": 1988,
         "aweme_id": video_id,
-        "count": 20,
+        "count": 10,
         "cursor": 0,
     }
 
     comments = []
 
     while len(comments) < max_comments:
-        r = requests.get(url, headers=headers, cookies=cookies, params=params)
-        if r.status_code != 200:
+        for attempt in range(3):
+            try:
+                r = requests.get(
+                    url,
+                    headers=headers,
+                    cookies=cookies,
+                    params=params,
+                    timeout=10
+                )
+                break
+            except requests.exceptions.RequestException as e:
+                logger.warning(f"⚠️ Retry {attempt+1}/3: {e}")
+                time.sleep(random.uniform(2, 4))
+        else:
             break
 
-        data = r.json()
+        if r.status_code != 200:
+            logger.warning(f"❌ Status code {r.status_code}")
+            break
+
+        try:
+            data = r.json()
+        except ValueError:
+            logger.warning("❌ TikTok trả response không phải JSON")
+            break
+
         if "comments" not in data:
             break
 
@@ -164,10 +189,11 @@ def fetch_comments_api(video_id, cookies, user_agent, max_comments=50):
             break
 
         params["cursor"] = data["cursor"]
-        time.sleep(1)
+        time.sleep(random.uniform(2.5, 4))
 
     logger.info(f"💬 Lấy được {len(comments)} comment")
     return comments
+
 
 
 # ================= CSV =================
@@ -182,41 +208,6 @@ def save_csv(file, rows, headers):
         else:
             writer.writerow(rows)
 
-def scroll_get_video_links(driver, limit):
-    driver.get(TARGET_PROFILE)
-    time.sleep(6)
-    solve_captcha(driver)
-
-    links = set()
-    no_new_round = 0
-    MAX_NO_NEW = 6   # sau 6 lần scroll không có video mới → dừng
-
-    last_height = driver.execute_script("return document.body.scrollHeight")
-
-    while len(links) < limit and no_new_round < MAX_NO_NEW:
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
-        time.sleep(random.uniform(2.5, 4))
-
-        elems = driver.find_elements(By.CSS_SELECTOR, 'a[href*="/video/"]')
-        for e in elems:
-            href = e.get_attribute("href")
-            if href and "/video/" in href:
-                links.add(href)
-
-        new_height = driver.execute_script("return document.body.scrollHeight")
-
-        if new_height == last_height:
-            no_new_round += 1
-            logger.warning(f"⚠️ Không load thêm video ({no_new_round}/{MAX_NO_NEW})")
-        else:
-            no_new_round = 0
-
-        last_height = new_height
-        logger.info(f"📹 Đã lấy {len(links)} video")
-
-    logger.info(f"🛑 Dừng scroll tại {len(links)} video")
-    return list(links)[:limit]
-
 
 # ================= MAIN =================
 def main():
@@ -224,19 +215,12 @@ def main():
     user_agent = driver.execute_script("return navigator.userAgent")
 
     try:
-        logger.info("🚀 BẮT ĐẦU CÀO TIKTOK")
-
+        logger.info("🚀 BẮT ĐẦU")
         video_links = scroll_get_video_links(driver, LIMIT_VIDEOS)
-
-        if not video_links:
-            logger.error("❌ Không lấy được video nào – kiểm tra URL profile")
-            return
-
         cookies = get_cookie_dict(driver)
 
         for idx, url in enumerate(video_links, 1):
-            logger.info(f"\n[{idx}/{len(video_links)}] {url}")
-
+            logger.info(f"\n[{idx}] {url}")
             video = get_video_info(driver, url)
             save_csv(VIDEO_FILE, video, video.keys())
 
@@ -246,13 +230,16 @@ def main():
                 user_agent,
                 MAX_COMMENTS_PER_VIDEO
             )
-
             if comments:
                 save_csv(COMMENT_FILE, comments, comments[0].keys())
 
-            time.sleep(random.uniform(4, 7))
+            time.sleep(random.uniform(5, 8))
 
-        logger.info("✅ HOÀN THÀNH TOÀN BỘ")
+        logger.info("✅ HOÀN THÀNH")
 
     finally:
         driver.quit()
+
+
+if __name__ == "__main__":
+    main()
